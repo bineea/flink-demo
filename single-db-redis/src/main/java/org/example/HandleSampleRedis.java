@@ -1,8 +1,10 @@
 package org.example;
 
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.redis.RedisSink;
 import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
@@ -55,7 +57,14 @@ public class HandleSampleRedis {
                 .setPassword("password")
                 .build();
 
-        dataStream.addSink(new RedisSink<Row>(conf, new RedisSampleMapper()));
+        SingleOutputStreamOperator<Row> filter = dataStream.filter(new FilterFunction<Row>() {
+            @Override
+            public boolean filter(Row value) throws Exception {
+                return true;
+            }
+        });
+
+        filter.addSink(new RedisSink<Row>(conf, new RedisSampleMapper()));
 
         environment.execute();
     }
